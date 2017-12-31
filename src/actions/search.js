@@ -131,12 +131,29 @@ export function query(namespace, collection, searchFields, searchTerm) {
     dispatch(querying(namespace, collection, searchFields, searchTerm));
     if (!integration) {
       localQuery(namespace, collection, searchFields, searchTerm, state, dispatch);
+      console.log('--jt search.js, query func, localQuery made because integreation', integration);
     } else {
       const provider = getIntegrationProvider(state.integrations, currentBackend(state.config).getToken, integration);
       provider.searchBy(searchFields.map(f => `data.${ f }`), collection, searchTerm).then(
         response => dispatch(querySuccess(namespace, collection, searchFields, searchTerm, response)),
         error => dispatch(queryFailure(namespace, collection, searchFields, searchTerm, error))
       );
+    }
+  };
+}
+
+// Hijacking collection search to return full collection. No filtering of entries like query()
+// this allows us to use the search part of the redux tree which Relation uses. We'd need to do some more engineering if not for this
+export function queryEntireCollection(namespace, collection, searchFields, searchTerm) {
+  return (dispatch, getState) => {
+    const state = getState();
+    const integration = selectIntegration(state, collection, 'search');
+    dispatch(querying(namespace, collection, searchFields, searchTerm));
+    if (!integration) {
+      console.log('--jt search.js queryEntireCollection state, collection', state, collection);
+      localQueryEntireCollection(namespace, collection, searchFields, searchTerm, state, dispatch);
+    } else{
+      console.log('hrmph');
     }
   };
 }
@@ -162,7 +179,7 @@ function localSearch(searchTerm, getState, dispatch) {
         }).filter(entry => entry.score > 5);
         localResults[collectionKey] = true;
         localResults.entries = localResults.entries.concat(filteredEntries);
-        
+
         const returnedKeys = Object.keys(localResults);
         const allCollections = state.collections.keySeq().toArray();
         if (allCollections.every(v => returnedKeys.indexOf(v) !== -1)) {
@@ -173,7 +190,7 @@ function localSearch(searchTerm, getState, dispatch) {
           }).map(f => f.original);
           if (allCollections.size > 3 || localResults.entries.length > 30) {
             console.warn('The Netlify CMS is currently using a Built-in search.' +
-            '\nWhile this works great for small sites, bigger projects might benefit from a separate search integration.' + 
+            '\nWhile this works great for small sites, bigger projects might benefit from a separate search integration.' +
             '\nPlease refer to the documentation for more information');
           }
           dispatch(searchSuccess(searchTerm, sortedResults, 0));
@@ -198,6 +215,8 @@ function localQuery(namespace, collection, searchFields, searchTerm, state, disp
   // Check if entries in this collection were already loaded
   if (state.entries.hasIn(['pages', collection, 'ids'])) {
     const entries = selectEntries(state, collection).toJS();
+    console.log('--jt search.js, localQuery func, entries from collection .toJS', entries);
+    console.log('--jt search.js, searchTerm', searchTerm);
     const filteredEntries = fuzzy.filter(searchTerm, entries, {
       extract: entry => searchFields.reduce((acc, field) => {
         const f = entry.data[field];
@@ -205,6 +224,7 @@ function localQuery(namespace, collection, searchFields, searchTerm, state, disp
       }, ""),
     }).filter(entry => entry.score > 5);
 
+    console.log('--jt search.js, filteredEntries', filteredEntries);
     const resultObj = {
       query: searchTerm,
       hits: [],
@@ -219,6 +239,35 @@ function localQuery(namespace, collection, searchFields, searchTerm, state, disp
       type: WAIT_UNTIL_ACTION,
       predicate: action => (action.type === ENTRIES_SUCCESS && action.payload.collection === collection),
       run: dispatch => dispatch(query(namespace, collection, searchFields, searchTerm)),
+    });
+    dispatch(loadEntries(state.collections.get(collection)));
+  }
+}
+
+function localQueryEntireCollection(namespace, collection, searchFields, searchTerm, state, dispatch) {
+  // Check if entries in this collection were already loaded
+  console.log('--jt search.js, localQueryEntireCollection');
+  console.log('--jt search.js, localQueryEntireCollection namespace, collection', namespace, collection);
+  console.log('--jt search.js, localQueryEntireCollection state.entries', state.entries);
+  if (state.entries.hasIn(['pages', collection, 'ids'])) {
+    console.log('--jt search.js, localQueryEntireCollection collection', collection);
+    const entries = selectEntries(state, collection).toJS();
+    console.log('--jt search.js, localQueryEntireCollection', entries);
+
+    const resultObj = {
+      query: searchTerm,
+      hits: [],
+    };
+
+    resultObj.hits = entries;
+    dispatch(querySuccess(namespace, collection, searchFields, searchTerm, resultObj));
+  } else {
+    // Collection entries aren't loaded yet.
+    // Dispatch loadEntries and wait before redispatching this action again.
+    dispatch({
+      type: WAIT_UNTIL_ACTION,
+      predicate: action => (action.type === ENTRIES_SUCCESS && action.payload.collection === collection),
+      run: dispatch => dispatch(queryEntireCollection(namespace, collection, searchFields, searchTerm)),
     });
     dispatch(loadEntries(state.collections.get(collection)));
   }

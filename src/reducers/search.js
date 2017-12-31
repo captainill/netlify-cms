@@ -56,6 +56,7 @@ const entries = (state = defaultState, action) => {
       return state.withMutations((map) => {
         map.set('isFetching', false);
         map.set('term', searchTerm);
+        console.log('--jt reducers.js QUERY_SUCCESS queryHits=', action.payload.namespace, response.hits);
         map.set('queryHits', Map({ [action.payload.namespace]: response.hits }));
       });
 
