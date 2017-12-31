@@ -252,14 +252,19 @@ function localQueryEntireCollection(namespace, collection, searchFields, searchT
   if (state.entries.hasIn(['pages', collection, 'ids'])) {
     console.log('--jt search.js, localQueryEntireCollection collection', collection);
     const entries = selectEntries(state, collection).toJS();
-    console.log('--jt search.js, localQueryEntireCollection', entries);
+
+    const formatForReactTagSuggestions = entries.map((entry, index) => ({
+        id: index,
+        name: entry.data[searchFields]
+      })
+    )
+
+    console.log('--jt search.js, localQueryEntireCollection formatForReactTagSuggestions', formatForReactTagSuggestions);
 
     const resultObj = {
       query: searchTerm,
-      hits: [],
+      hits: formatForReactTagSuggestions,
     };
-
-    resultObj.hits = entries;
     dispatch(querySuccess(namespace, collection, searchFields, searchTerm, resultObj));
   } else {
     // Collection entries aren't loaded yet.

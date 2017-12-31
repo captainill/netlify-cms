@@ -89,7 +89,7 @@ class TagControl extends Component {
   //   onChange(listValue.map(val => val.trim()));
   // };
 
-  handleDelete (index) {
+  handleDelete = (index) => {
     //const { itemsCollapsed } = this.state;
     const { value, metadata, onChange, forID } = this.props;
     const parsedMetadata = metadata && { [forID]: metadata.removeIn(value.get(index).valueSeq()) };
@@ -101,7 +101,8 @@ class TagControl extends Component {
     onChange(value.remove(index), parsedMetadata);
   }
 
-  handleAddition (tag) {
+  handleAddition = (tag) => {
+    console.log('handleAddition this', this );
     const { value, onChange } = this.props;
     console.log('jt-- handleAddition func, tag to add:', tag);
     console.log('jt-- handleAddition func, value:', value);
