@@ -131,7 +131,6 @@ export function query(namespace, collection, searchFields, searchTerm) {
     dispatch(querying(namespace, collection, searchFields, searchTerm));
     if (!integration) {
       localQuery(namespace, collection, searchFields, searchTerm, state, dispatch);
-      console.log('--jt search.js, query func, localQuery made because integreation', integration);
     } else {
       const provider = getIntegrationProvider(state.integrations, currentBackend(state.config).getToken, integration);
       provider.searchBy(searchFields.map(f => `data.${ f }`), collection, searchTerm).then(
@@ -150,10 +149,7 @@ export function queryEntireCollection(namespace, collection, searchFields, searc
     const integration = selectIntegration(state, collection, 'search');
     dispatch(querying(namespace, collection, searchFields, searchTerm));
     if (!integration) {
-      console.log('--jt search.js queryEntireCollection state, collection', state, collection);
       localQueryEntireCollection(namespace, collection, searchFields, searchTerm, state, dispatch);
-    } else{
-      console.log('hrmph');
     }
   };
 }
@@ -215,8 +211,6 @@ function localQuery(namespace, collection, searchFields, searchTerm, state, disp
   // Check if entries in this collection were already loaded
   if (state.entries.hasIn(['pages', collection, 'ids'])) {
     const entries = selectEntries(state, collection).toJS();
-    console.log('--jt search.js, localQuery func, entries from collection .toJS', entries);
-    console.log('--jt search.js, searchTerm', searchTerm);
     const filteredEntries = fuzzy.filter(searchTerm, entries, {
       extract: entry => searchFields.reduce((acc, field) => {
         const f = entry.data[field];
@@ -224,7 +218,6 @@ function localQuery(namespace, collection, searchFields, searchTerm, state, disp
       }, ""),
     }).filter(entry => entry.score > 5);
 
-    console.log('--jt search.js, filteredEntries', filteredEntries);
     const resultObj = {
       query: searchTerm,
       hits: [],
@@ -246,11 +239,7 @@ function localQuery(namespace, collection, searchFields, searchTerm, state, disp
 
 function localQueryEntireCollection(namespace, collection, searchFields, searchTerm, state, dispatch) {
   // Check if entries in this collection were already loaded
-  console.log('--jt search.js, localQueryEntireCollection');
-  console.log('--jt search.js, localQueryEntireCollection namespace, collection', namespace, collection);
-  console.log('--jt search.js, localQueryEntireCollection state.entries', state.entries);
   if (state.entries.hasIn(['pages', collection, 'ids'])) {
-    console.log('--jt search.js, localQueryEntireCollection collection', collection);
     const entries = selectEntries(state, collection).toJS();
 
     const formatForReactTagSuggestions = entries.map((entry, index) => ({
@@ -258,8 +247,6 @@ function localQueryEntireCollection(namespace, collection, searchFields, searchT
         name: entry.data[searchFields]
       })
     )
-
-    console.log('--jt search.js, localQueryEntireCollection formatForReactTagSuggestions', formatForReactTagSuggestions);
 
     const resultObj = {
       query: searchTerm,
