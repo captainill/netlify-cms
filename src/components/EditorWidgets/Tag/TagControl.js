@@ -3,21 +3,16 @@ import PropTypes from 'prop-types';
 import ReactTags from 'react-tag-autocomplete';
 import uuid from 'uuid/v4';
 import ImmutablePropTypes from 'react-immutable-proptypes';
-import { List, Map } from 'immutable';
+import Immutable, { List, Map } from 'immutable';
 import { connect } from 'react-redux';
 import { partial, debounce } from 'lodash';
 import { queryEntireCollection, clearSearch } from 'Actions/search';
 import { Loader } from 'UI';
 import c from 'classnames';
 
-function valueToString(value) {
-  return value ? value.join(',').replace(/,([^\s]|$)/g, ', $1') : '';
-}
-
 class TagControl extends Component {
   static propTypes = {
     onChange: PropTypes.func.isRequired,
-    value: ImmutablePropTypes.list,
     field: PropTypes.object,
     forID: PropTypes.string,
     isFetching: PropTypes.node,
@@ -31,10 +26,6 @@ class TagControl extends Component {
     setInactiveStyle: PropTypes.func.isRequired
   }
 
-  static defaultProps = {
-    value: List()
-  };
-
   constructor(props, ctx) {
     super(props, ctx);
     const { value } = props;
@@ -43,11 +34,8 @@ class TagControl extends Component {
     this.didInitialSearch = false;
 
     // this.state = {
-    //   value: valueToString(value)
-    // };
-
-    console.log('jt-- constructutor func, value', value);
-
+    //   value:
+    // }
   }
 
   componentDidMount() {
@@ -131,18 +119,18 @@ class TagControl extends Component {
     //   onBlur: setInactiveStyle,
     // };
 
-    //const tags = value || List();
-    const tags = value;
+    const tags = value || List();
+    //const tags = value;
     const suggestions = (queryHits.get) ? queryHits.get(this.controlID, []) : [];
 
     console.log('jt-- render func, queryHits.get:', queryHits.get, queryHits.get(this.controlID, []));
-    console.log('jt-- render func, tags from value:', tags);
+    console.log('jt-- render func, tag:', tags.toJS(), tags.toJS() instanceof Array, tags.toArray());
     console.log('jt-- render func, suggestions:', suggestions);
 
     return (
       <div>
         <ReactTags
-          tags={tags}
+          tags={tags.toJS()}
           suggestions={suggestions}
           handleDelete={this.handleDelete}
           handleAddition={this.handleAddition} />
