@@ -25,29 +25,24 @@ class TagControl extends Component {
     setActiveStyle: PropTypes.func.isRequired,
     setInactiveStyle: PropTypes.func.isRequired
   }
-
+  
   constructor(props, ctx) {
     super(props, ctx);
     const { value } = props;
 
     this.controlID = uuid();
     this.didInitialSearch = false;
-
-    // this.state = {
-    //   value:
-    // }
   }
 
   componentDidMount() {
     const { value, field } = this.props;
-    if (value) {
-      const collection = field.get('collection');
-      const searchFields = field.get('searchFields').toJS();
-      this.props.queryEntireCollection(this.controlID, collection, searchFields, value);
 
-      console.log('jt-- componentDidMount func, collection:', collection);
-      console.log('jt-- componentDidMount func, searchFields:', searchFields);
-    }
+    const collection = field.get('collection');
+    const searchFields = field.get('searchFields').toJS();
+    this.props.queryEntireCollection(this.controlID, collection, searchFields, value);
+
+    console.log('jt-- componentDidMount func, collection:', collection);
+    console.log('jt-- componentDidMount func, searchFields:', searchFields);
   }
 
   componentWillReceiveProps(nextProps) {
@@ -95,7 +90,7 @@ class TagControl extends Component {
     console.log('jt-- handleAddition func, tag to add:', tag);
     console.log('jt-- handleAddition func, value:', value);
     //this.setState({ itemsCollapsed: this.state.itemsCollapsed.push(false) });
-    onChange(value.push(tag));
+    onChange((value || List()).push(tag));
   }
 
   render(){
